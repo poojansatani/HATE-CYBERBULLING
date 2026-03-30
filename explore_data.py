@@ -13,5 +13,5 @@ print(df.columns.tolist())
 print("\n=== Pehla 5 rows ===")
 print(df.head())
 
-print("\n=== Class distribution ===")
+print("\n=== Class dist. ===")
 print(df['class'].value_counts())
