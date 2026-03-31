@@ -11,7 +11,7 @@ with open('vectorizer.pkl', 'rb') as f:
 
 # ---- Keyword Lists ----
 hate_keywords = [
-    'should die', 'deserve to die', 'should not exist',
+    'hate you',' should die', 'deserve to die', 'should not exist',
     'wipe them out', 'wipe out', 'get rid of them',
     'eliminate them', 'exterminate', 'subhuman', 'sub-human',
     'vermin', 'parasite', 'filth', 'scum', 'they should all',
