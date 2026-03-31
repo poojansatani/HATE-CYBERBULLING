@@ -8,7 +8,7 @@ with open('best_model.pkl', 'rb') as f:
 
 with open('vectorizer.pkl', 'rb') as f:
     vectorizer = pickle.load(f)
-
+    
 # ---- Keyword Lists ----
 hate_keywords = [
     'hate you',' should die', 'deserve to die', 'should not exist',
