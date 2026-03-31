@@ -43,7 +43,7 @@ offensive_keywords = [
 ]
 
 normal_keywords = [
-    'good morning', 'good evening', 'good night', 'good afternoon',
+    'hii','how are you','good morning', 'good evening', 'good night', 'good afternoon',
     'have a great', 'have a good', 'have a nice', 'have a wonderful',
     'thank you', 'thanks so much', 'well done', 'congratulations',
     'i hope you', 'hope you are', 'take care', 'stay safe',
