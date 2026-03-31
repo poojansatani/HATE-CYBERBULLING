@@ -1,13 +1,22 @@
 import streamlit as st
 import pickle
 import re
+from langdetect import detect
+from deep_translator import GoogleTranslator
 
-# Model ane vectorizer load karo
-with open('best_model.pkl', 'rb') as f:
-    model = pickle.load(f)
+# ---- Model ane vectorizer load karo ----
+@st.cache_resource # આનાથી મોડેલ વારંવાર લોડ નહીં થાય અને એપ ફાસ્ટ ચાલશે
+def load_models():
+    with open('best_model.pkl', 'rb') as f:
+        model = pickle.load(f)
+    with open('vectorizer.pkl', 'rb') as f:
+        vectorizer = pickle.load(f)
+    return model, vectorizer
 
-with open('vectorizer.pkl', 'rb') as f:
-    vectorizer = pickle.load(f)
+try:
+    model, vectorizer = load_models()
+except Exception as e:
+    st.error(f"Error loading models: {e}")
 
 # ---- Keyword Lists ----
 hate_keywords = [
@@ -58,7 +67,7 @@ normal_keywords = [
     'you are smart', 'you are talented', 'you are awesome'
 ]
 
-# ---- Text Cleaning ----
+# ---- Text Cleaning Function ----
 def clean_text(text):
     t = text.lower()
     t = re.sub(r'http\S+|www\S+', '', t)
@@ -69,43 +78,64 @@ def clean_text(text):
 
 # ---- Smart Predict Function ----
 def predict(text):
-    text_lower = text.lower()
+    raw_text = text.strip()
+    working_text = raw_text.lower()
+    
+    # ભાષા ઓળખો અને જરૂર પડે તો ઇંગ્લિશમાં ટ્રાન્સલેટ કરો
+    try:
+        detected_lang = detect(raw_text)
+        if detected_lang != 'en':
+            working_text = GoogleTranslator(source='auto', target='en').translate(raw_text).lower()
+            st.info(f"🌐 Detected Language: **{detected_lang}** | Translated: *{working_text}*")
+    except:
+        pass # જો ડિટેક્ટ ન થાય તો ઓરિજિનલ ટેક્સ્ટ વાપરો
 
-    # Step 1: Normal keywords check (pehla)
+    # Step 1: Normal keywords check
     for kw in normal_keywords:
-        if kw in text_lower:
+        if kw in working_text:
             return 2  # Normal
 
     # Step 2: Hate keywords check
     for kw in hate_keywords:
-        if kw in text_lower:
+        if kw in working_text:
             return 0  # Hate Speech
 
     # Step 3: Offensive keywords check
     for kw in offensive_keywords:
-        if kw in text_lower:
+        if kw in working_text:
             return 1  # Offensive
 
-    # Step 4: ML Model (jyare koi keyword na male)
-    cleaned = clean_text(text)
+    # Step 4: ML Model (જ્યારે કોઈ કીવર્ડ ન મળે)
+    cleaned = clean_text(working_text)
     vectorized = vectorizer.transform([cleaned])
     return model.predict(vectorized)[0]
 
 # ---- Streamlit UI ----
+st.set_page_config(page_title="Hate Speech Detector", page_icon="🛡️")
+
 st.title("🛡️ Cyberbullying & Hate Speech Detector")
-st.write("Koi pan text lakho — model detect karse ke te "
-         "Hate Speech che, Offensive che, ke Normal!")
+st.write("તમે કોઈ પણ ભાષામાં ટેક્સ્ટ લખી શકો છો (ગુજરાતી, હિન્દી, ઇંગ્લિશ).")
 
-user_input = st.text_area("✍️ Text yahan lakho:", height=150)
+user_input = st.text_area("✍️ અહીં મેસેજ લખો:", height=150)
 
-if st.button("🔍 Detect karo"):
+if st.button("🔍 Detect કરો"):
     if user_input.strip() == "":
-        st.warning("Pehla koi text lakho!")
+        st.warning("પહેલા કંઈક ટેક્સ્ટ લખો!")
     else:
-        result = predict(user_input)
-        if result == 0:
-            st.error("🚨 Hate Speech detected!")
-        elif result == 1:
-            st.warning("⚠️ Offensive Language detected!")
-        else:
-            st.success("✅ Normal Message — koi problem nathi!")
+        with st.spinner('Checking...'):
+            result = predict(user_input)
+            
+            st.subheader("Result:")
+            if result == 0:
+                st.error("🚨 **Hate Speech Detected!**")
+                st.write("આ મેસેજમાં નફરત ફેલાવતા શબ્દો છે.")
+            elif result == 1:
+                st.warning("⚠️ **Offensive Language Detected!**")
+                st.write("આ મેસેજ અપમાનજનક હોઈ શકે છે.")
+            else:
+                st.success("✅ **Normal Message**")
+                st.write("આ મેસેજ સુરક્ષિત છે.")
+
+# Footer
+st.markdown("---")
+st.caption("AI Model for Cyberbullying Detection | Developed by Poojan Satani")
