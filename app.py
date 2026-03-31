@@ -4,9 +4,11 @@ import re
 from langdetect import detect
 from deep_translator import GoogleTranslator
 
-# ---- Model ane vectorizer load karo ----
+# --- આ લાઈન હવે સૌથી ઉપર છે, એટલે હવે એરર નહીં આવે ---
 st.set_page_config(page_title="Hate Speech Detector", page_icon="🛡️")
-@st.cache_resource # આનાથી મોડેલ વારંવાર લોડ નહીં થાય અને એપ ફાસ્ટ ચાલશે
+
+# ---- Model ane vectorizer load karo ----
+@st.cache_resource
 def load_models():
     with open('best_model.pkl', 'rb') as f:
         model = pickle.load(f)
@@ -14,6 +16,9 @@ def load_models():
         vectorizer = pickle.load(f)
     return model, vectorizer
 
+# મોડેલ લોડ કરવાનો પ્રયત્ન કરો
+model = None
+vectorizer = None
 try:
     model, vectorizer = load_models()
 except Exception as e:
@@ -82,38 +87,33 @@ def predict(text):
     raw_text = text.strip()
     working_text = raw_text.lower()
     
-    # ભાષા ઓળખો અને જરૂર પડે તો ઇંગ્લિશમાં ટ્રાન્સલેટ કરો
     try:
         detected_lang = detect(raw_text)
         if detected_lang != 'en':
             working_text = GoogleTranslator(source='auto', target='en').translate(raw_text).lower()
             st.info(f"🌐 Detected Language: **{detected_lang}** | Translated: *{working_text}*")
     except:
-        pass # જો ડિટેક્ટ ન થાય તો ઓરિજિનલ ટેક્સ્ટ વાપરો
+        pass
 
-    # Step 1: Normal keywords check
     for kw in normal_keywords:
         if kw in working_text:
-            return 2  # Normal
+            return 2
 
-    # Step 2: Hate keywords check
     for kw in hate_keywords:
         if kw in working_text:
-            return 0  # Hate Speech
+            return 0
 
-    # Step 3: Offensive keywords check
     for kw in offensive_keywords:
         if kw in working_text:
-            return 1  # Offensive
+            return 1
 
-    # Step 4: ML Model (જ્યારે કોઈ કીવર્ડ ન મળે)
-    cleaned = clean_text(working_text)
-    vectorized = vectorizer.transform([cleaned])
-    return model.predict(vectorized)[0]
+    if model and vectorizer:
+        cleaned = clean_text(working_text)
+        vectorized = vectorizer.transform([cleaned])
+        return model.predict(vectorized)[0]
+    return 2 # Default to normal if model fails
 
 # ---- Streamlit UI ----
-st.set_page_config(page_title="Hate Speech Detector", page_icon="🛡️")
-
 st.title("🛡️ Cyberbullying & Hate Speech Detector")
 st.write("તમે કોઈ પણ ભાષામાં ટેક્સ્ટ લખી શકો છો (ગુજરાતી, હિન્દી, ઇંગ્લિશ).")
 
@@ -137,6 +137,5 @@ if st.button("🔍 Detect કરો"):
                 st.success("✅ **Normal Message**")
                 st.write("આ મેસેજ સુરક્ષિત છે.")
 
-# Footer
 st.markdown("---")
 st.caption("AI Model for Cyberbullying Detection | Developed by Poojan Satani")
