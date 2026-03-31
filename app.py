@@ -4,25 +4,22 @@ import re
 from langdetect import detect
 from deep_translator import GoogleTranslator
 
-# --- આ લાઈન હવે સૌથી ઉપર છે, એટલે હવે એરર નહીં આવે ---
-st.set_page_config(page_title="Hate Speech Detector", page_icon="🛡️")
+# --- આ લાઈન હંમેશા સૌથી ઉપર હોવી જોઈએ ---
+st.set_page_config(page_title="Cyberbullying Detector", page_icon="🛡️")
 
 # ---- Model ane vectorizer load karo ----
 @st.cache_resource
 def load_models():
-    with open('best_model.pkl', 'rb') as f:
-        model = pickle.load(f)
-    with open('vectorizer.pkl', 'rb') as f:
-        vectorizer = pickle.load(f)
-    return model, vectorizer
+    try:
+        with open('best_model.pkl', 'rb') as f:
+            model = pickle.load(f)
+        with open('vectorizer.pkl', 'rb') as f:
+            vectorizer = pickle.load(f)
+        return model, vectorizer
+    except Exception as e:
+        return None, None
 
-# મોડેલ લોડ કરવાનો પ્રયત્ન કરો
-model = None
-vectorizer = None
-try:
-    model, vectorizer = load_models()
-except Exception as e:
-    st.error(f"Error loading models: {e}")
+model, vectorizer = load_models()
 
 # ---- Keyword Lists ----
 hate_keywords = [
@@ -73,7 +70,7 @@ normal_keywords = [
     'you are smart', 'you are talented', 'you are awesome'
 ]
 
-# ---- Text Cleaning Function ----
+# ---- Text Cleaning ----
 def clean_text(text):
     t = text.lower()
     t = re.sub(r'http\S+|www\S+', '', t)
@@ -87,55 +84,64 @@ def predict(text):
     raw_text = text.strip()
     working_text = raw_text.lower()
     
+    # Translation Logic
     try:
-        detected_lang = detect(raw_text)
-        if detected_lang != 'en':
-            working_text = GoogleTranslator(source='auto', target='en').translate(raw_text).lower()
-            st.info(f"🌐 Detected Language: **{detected_lang}** | Translated: *{working_text}*")
+        # જો ટેક્સ્ટમાં ગુજરાતી/હિન્દી અક્ષરો હોય અથવા લાંબુ વાક્ય હોય
+        translator = GoogleTranslator(source='auto', target='en')
+        translated = translator.translate(raw_text)
+        
+        if translated.lower() != raw_text.lower():
+            working_text = translated.lower()
+            st.info(f"✨ Translated: {working_text}")
     except:
         pass
 
+    # Step 1: Normal Keywords
     for kw in normal_keywords:
         if kw in working_text:
             return 2
 
+    # Step 2: Hate Keywords
     for kw in hate_keywords:
         if kw in working_text:
             return 0
 
+    # Step 3: Offensive Keywords
     for kw in offensive_keywords:
         if kw in working_text:
             return 1
 
+    # Step 4: ML Model
     if model and vectorizer:
         cleaned = clean_text(working_text)
         vectorized = vectorizer.transform([cleaned])
         return model.predict(vectorized)[0]
-    return 2 # Default to normal if model fails
+    
+    return 2 # Default
 
 # ---- Streamlit UI ----
-st.title("🛡️ Cyberbullying & Hate Speech Detector")
-st.write("તમે કોઈ પણ ભાષામાં ટેક્સ્ટ લખી શકો છો (ગુજરાતી, હિન્દી, ઇંગ્લિશ).")
+st.title("🛡️ Cyberbullying Detector")
+st.write("લખો ગમે તે ભાષામાં, અમે શોધીશું સાયબર બુલિંગ!")
 
-user_input = st.text_area("✍️ અહીં મેસેજ લખો:", height=150)
+user_input = st.text_area("✍️ અહીં મેસેજ લખો:", height=100)
 
-if st.button("🔍 Detect કરો"):
+if st.button("🔍 Analyze"):
     if user_input.strip() == "":
-        st.warning("પહેલા કંઈક ટેક્સ્ટ લખો!")
+        st.warning("પહેલા કંઈક લખો!")
     else:
-        with st.spinner('Checking...'):
-            result = predict(user_input)
-            
-            st.subheader("Result:")
-            if result == 0:
-                st.error("🚨 **Hate Speech Detected!**")
-                st.write("આ મેસેજમાં નફરત ફેલાવતા શબ્દો છે.")
-            elif result == 1:
-                st.warning("⚠️ **Offensive Language Detected!**")
-                st.write("આ મેસેજ અપમાનજનક હોઈ શકે છે.")
-            else:
-                st.success("✅ **Normal Message**")
-                st.write("આ મેસેજ સુરક્ષિત છે.")
+        if model is None:
+            st.error("Model file (best_model.pkl) મળી નથી. મહેરબાની કરીને ફાઈલ અપલોડ કરો.")
+        else:
+            with st.spinner('Checking...'):
+                result = predict(user_input)
+                
+                st.subheader("Result:")
+                if result == 0:
+                    st.error("🚨 Hate Speech Detected!")
+                elif result == 1:
+                    st.warning("⚠️ Offensive Language Detected!")
+                else:
+                    st.success("✅ Normal Message")
 
 st.markdown("---")
-st.caption("AI Model for Cyberbullying Detection | Developed by Poojan Satani")
+st.caption("Developed by Poojan Satani | AI Cyberbullying Detection Project")
