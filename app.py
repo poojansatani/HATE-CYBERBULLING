@@ -2,7 +2,6 @@ import streamlit as st
 import pickle
 import re
 
-# Model ane vectorizer load karo
 with open('best_model.pkl', 'rb') as f:
     model = pickle.load(f)
 
