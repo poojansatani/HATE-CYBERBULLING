@@ -5,6 +5,7 @@ from langdetect import detect
 from deep_translator import GoogleTranslator
 
 # ---- Model ane vectorizer load karo ----
+st.set_page_config(page_title="Hate Speech Detector", page_icon="🛡️")
 @st.cache_resource # આનાથી મોડેલ વારંવાર લોડ નહીં થાય અને એપ ફાસ્ટ ચાલશે
 def load_models():
     with open('best_model.pkl', 'rb') as f:
