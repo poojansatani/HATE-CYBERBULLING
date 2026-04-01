@@ -79,27 +79,14 @@ def clean_text(text):
 
 def detect_and_translate(text):
     try:
-        # Step 1: Auto translate karo
-        translated_auto = GoogleTranslator(
-            source='auto', target='en').translate(text)
-
-        # Step 2: Gujarati as source try karo
-        translated_gu = GoogleTranslator(
-            source='gu', target='en').translate(text)
-
-        # Step 3: Jo Gujarati translation English thi alag hoy
-        # to Gujarati version use karo (more accurate)
-        if translated_gu and translated_gu.strip().lower() != text.strip().lower():
-            final_translation = translated_gu
-        else:
-            final_translation = translated_auto
-
-        # Non-English detect karo
-        if final_translation.strip().lower() != text.strip().lower():
-            return '🌐 Non-English detected', final_translation
+        # deep_translator - Google Translate j use kare che reliable rite
+        translated = GoogleTranslator(source='auto', target='en').translate(text)
+        
+        # Jо translate alag hoy to non-english
+        if translated.strip().lower() != text.strip().lower():
+            return '🌐 Non-English detected', translated
         else:
             return 'English 🇬🇧', text
-
     except Exception:
         return 'English 🇬🇧', text
 # ---- Predict Function ----
