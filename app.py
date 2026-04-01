@@ -83,7 +83,7 @@ def detect_and_translate(text):
         translated = GoogleTranslator(
             source='auto', target='en').translate(text)
         
-        # Jо translate thayelu original thi alag hoy
+        # Jо translate thayelu original thi alag hoy = non-english
         if translated.strip().lower() != text.strip().lower():
             return '🌐 Non-English detected', translated
         else:
