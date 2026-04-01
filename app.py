@@ -77,20 +77,31 @@ def clean_text(text):
     t = re.sub(r'[^a-z\s]', '', t)
     return t.strip()
 
-# ---- Translate Function ----
 def detect_and_translate(text):
     try:
-        translated = GoogleTranslator(
+        # Step 1: Auto translate karo
+        translated_auto = GoogleTranslator(
             source='auto', target='en').translate(text)
-        
-        # Jо translate thayelu original thi alag hoy = non-english
-        if translated.strip().lower() != text.strip().lower():
-            return '🌐 Non-English detected', translated
+
+        # Step 2: Gujarati as source try karo
+        translated_gu = GoogleTranslator(
+            source='gu', target='en').translate(text)
+
+        # Step 3: Jo Gujarati translation English thi alag hoy
+        # to Gujarati version use karo (more accurate)
+        if translated_gu and translated_gu.strip().lower() != text.strip().lower():
+            final_translation = translated_gu
+        else:
+            final_translation = translated_auto
+
+        # Non-English detect karo
+        if final_translation.strip().lower() != text.strip().lower():
+            return '🌐 Non-English detected', final_translation
         else:
             return 'English 🇬🇧', text
+
     except Exception:
         return 'English 🇬🇧', text
-
 # ---- Predict Function ----
 def predict(text):
     text_lower = text.lower()
