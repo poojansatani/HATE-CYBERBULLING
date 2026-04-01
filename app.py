@@ -76,7 +76,6 @@ def clean_text(text):
     t = re.sub(r'\d+', '', t)
     t = re.sub(r'[^a-z\s]', '', t)
     return t.strip()
-
 def detect_and_translate(text):
     try:
         # deep_translator - Google Translate j use kare che reliable rite
@@ -89,7 +88,7 @@ def detect_and_translate(text):
             return 'English 🇬🇧', text
     except Exception:
         return 'English 🇬🇧', text
-# ---- Predict Function ----
+
 def predict(text):
     text_lower = text.lower()
     for kw in normal_keywords:
