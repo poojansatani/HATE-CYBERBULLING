@@ -80,17 +80,16 @@ def clean_text(text):
 # ---- Translate Function ----
 def detect_and_translate(text):
     try:
-        lang_code = detect(text)
-        lang_label = lang_names.get(lang_code, f'Unknown ({lang_code})')
-        if lang_code == 'en':
-            return 'English 🇬🇧', text
         translated = GoogleTranslator(
             source='auto', target='en').translate(text)
-        return lang_label, translated
-    except LangDetectException:
-        return 'Unknown', text
+        
+        # Jо translate thayelu original thi alag hoy
+        if translated.strip().lower() != text.strip().lower():
+            return '🌐 Non-English detected', translated
+        else:
+            return 'English 🇬🇧', text
     except Exception:
-        return 'Unknown', text
+        return 'English 🇬🇧', text
 
 # ---- Predict Function ----
 def predict(text):
